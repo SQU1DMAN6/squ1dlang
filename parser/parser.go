@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"squ1d/ast"
 	"squ1d/lexer"
 	"squ1d/token"
@@ -39,14 +38,13 @@ func (p *Parser) nextToken() {
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
-
 	for p.curToken.Type != token.EOF {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
+		p.nextToken()
 	}
-
 	return program
 }
 
@@ -75,6 +73,23 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 	return stmt
 }
+
+// func (p *Parser) curTokenIs(t token.TokenType) bool {
+// 	return p.curToken.Type == t
+// }
+// func (p *Parser) peekTokenIs(t token.TokenType) bool {
+// 	return p.peekToken.Type == t
+// }
+// func (p *Parser) expectPeek(t token.TokenType) bool {
+// 	if p.peekTokenIs(t) {
+// 		p.nextToken()
+// 		return true
+// 	} else {
+// 		p.peekError(t)
+// 		return false
+// 	}
+// }
+
 func (p *Parser) curTokenIs(t token.TokenType) bool {
 	return p.curToken.Type == t
 }
@@ -86,12 +101,11 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		p.nextToken()
 		return true
 	} else {
-		p.peekError(t)
 		return false
 	}
 }
 
-func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("Expected next token to be %s, got %s instead", t, p.peekToken.Type)
-	p.errors = append(p.errors, msg)
-}
+// func (p *Parser) peekError(t token.TokenType) {
+// 	msg := fmt.Sprintf("Expected next token to be %s, got %s instead", t, p.peekToken.Type)
+// 	p.errors = append(p.errors, msg)
+// }
