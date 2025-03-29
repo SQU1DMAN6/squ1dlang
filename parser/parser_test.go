@@ -10,12 +10,12 @@ func TestLetStatements(t *testing.T) {
 	input := `
 	let x = 5;
 	let y = 10;
-	let foobar = 838383;
+	let foobar =838383;
 	`
 	l := lexer.New(input)
 	p := New(l)
-	checkParserErrors(t, p)
 	program := p.ParseProgram()
+	checkParserErrors(t, p)
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
