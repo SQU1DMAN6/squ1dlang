@@ -34,7 +34,7 @@ func (ls *LetStatement) statementNode()       {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 
 type ReturnStatement struct {
-	Token       token.Token // The 'return' token
+	Token       token.Token
 	ReturnValue Expression
 }
 
@@ -106,7 +106,6 @@ func (oe *InfixExpression) String() string {
 	return out.String()
 }
 
-// IDENTIFIER STRUCT AND METHODS=================================================
 type Identifier struct {
 	Token token.Token
 	Value string
@@ -116,7 +115,6 @@ func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
 
-// STRING METHOD, SAME NAME BUT DIFFERENT STRUCT=================================================
 func (p *Program) String() string {
 	var out bytes.Buffer
 
