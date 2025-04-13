@@ -72,7 +72,7 @@ type PrefixExpression struct {
 	Right    Expression
 }
 
-func (pe *PrefixExpression) expressionNode() {}
+func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
@@ -85,7 +85,27 @@ func (pe *PrefixExpression) String() string {
 	return out.String()
 }
 
-// IDENTIFIER STRUCT AND METHODS=================================================
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (oe *InfixExpression) expressionNode() {}
+func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
+func (oe *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(oe.Left.String())
+	out.WriteString(" " + oe.Operator + " ")
+	out.WriteString(oe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
 type Identifier struct {
 	Token token.Token
 	Value string
@@ -95,7 +115,6 @@ func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
 
-// STRING METHOD, SAME NAME BUT DIFFERENT STRUCT=================================================
 func (p *Program) String() string {
 	var out bytes.Buffer
 
