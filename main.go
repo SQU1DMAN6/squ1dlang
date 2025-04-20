@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	// "os"
-	"os/user"
-	// "squ1d/repl"
+	"fmt";
+	"os";
+	"os/user";
+	"squ1d/repl";
 )
 
 // ~ a class, abstract thing, blueprint
@@ -26,7 +26,7 @@ func main() {
 	}
 	fmt.Printf("Hello %s! This is the SQU1D programming language!\n", user.Username)
 	fmt.Printf("Feel free to type in commands\n")
-	// repl.Start(os.Stdin, os.Stdout)
+	repl.Start(os.Stdin, os.Stdout)
 
 	
 	//~ instance, concrete thing from the abstract one above
