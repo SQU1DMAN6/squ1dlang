@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt";
-	"os";
-	"os/user";
-	"squ1d/repl";
+	"fmt"
+	"os"
+	"os/user"
+	"squ1d/repl"
 )
 
 // ~ a class, abstract thing, blueprint
