@@ -138,6 +138,111 @@ func TestEvalIntegerParsing(t *testing.T) {
 	}
 }
 
+func TestReturnStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"return 10;", 10},
+		{"return 10; 9;", 10},
+		{"return 2 * 5; 9;", 10},
+		{"9; return 2 * 5; 9;", 10},
+		{
+			`
+if (10 > 1) {
+	if (10 > 1) {
+	return 10;
+}
+	return 1;
+}
+`,
+			10,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
+// func TestLetStatements(t *testing.T) {
+// 	tests := []struct {
+// 		input    string
+// 		expected int64
+// 	}{
+// 		{"let a = 5; a;", 5},
+// 		{"let a = 5 * 5; a;", 25},
+// 		{"let a = 5; let b = a; b;", 5},
+// 		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+// 	}
+
+// 	for _, tt := range tests {
+// 		testIntegerObject(t, testEval(tt.input), tt.expected)
+// 	}
+// }
+
+func TestErrorHandling(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedMessage string
+	}{
+		{
+			"5 + true;",
+			"Type mismatch: INTEGER + BOOLEAN",
+		},
+		{
+			"5 + true; 5;",
+			"Type mismatch: INTEGER + BOOLEAN",
+		},
+		{
+			"-true",
+			"Unknown operator: -BOOLEAN",
+		},
+		{
+			"true + false;",
+			"Unknown operator: BOOLEAN + BOOLEAN",
+		},
+		{
+			"5; true + false; 5",
+			"Unknown operator: BOOLEAN + BOOLEAN",
+		},
+		{
+			"if (10 > 1) { true + false; }",
+			"Unknown operator: BOOLEAN + BOOLEAN",
+		},
+		{
+			`
+if (10 > 1) {
+	if (10 > 1) {
+	return true + false;
+}
+	return 1;
+}
+			`,
+			"Unknown operator: BOOLEAN + BOOLEAN",
+		},
+		{
+			"foobar",
+			"Identifier not found: foobar",
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+
+		errObj, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Errorf("No error object returned. Got %T (%+v)", evaluated, evaluated)
+			continue
+		}
+
+		if errObj.Message != tt.expectedMessage {
+			t.Errorf("Wrong error message. Expected %q, got %q", tt.expectedMessage, errObj.Message)
+		}
+	}
+}
+
 func TestBangOperator(t *testing.T) {
 	tests := []struct {
 		input    string
