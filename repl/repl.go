@@ -8,8 +8,6 @@ import (
 	"squ1d/evaluator"
 	"squ1d/lexer"
 	"squ1d/object"
-
-	// "squ1d/object"
 	"squ1d/parser"
 )
 
