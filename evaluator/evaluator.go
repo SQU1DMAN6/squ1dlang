@@ -48,20 +48,19 @@ func Eval(node ast.Node) object.Object {
 			return val
 		}
 		return &object.ReturnValue{Value: val}
-	// case *ast.LetStatement:
-	// 	val := Eval(node.Value, env)
-	// 	if isError(val) {
-	// 		return val
-	// 	}
-	// 	env.Set(node.Name.Value, val)
-	// case *ast.Identifier:
-	// 	return evalIdentifier(node, env)
+		// case *ast.LetStatement:
+		// 	val := Eval(node.Value, env)
+		// 	if isError(val) {
+		// 		return val
+		// 	}
+		// 	env.Set(node.Name.Value, val)
+		// case *ast.Identifier:
+		// 	return evalIdentifier(node, env)
 	}
 
 	return nil
 }
 
-// Need to fix that one.
 func evalProgram(program *ast.Program) object.Object {
 	var result object.Object
 	for _, statement := range program.Statements {
@@ -75,28 +74,6 @@ func evalProgram(program *ast.Program) object.Object {
 	}
 	return result
 }
-
-// func evalProgram(program *ast.Program) object.Object {
-// 	var result object.Object
-// 	for _, statement := range program.Statements {
-// 		result = Eval(statement)
-// 		if returnValue, ok := result.(*object.ReturnValue); ok {
-// 			return returnValue.Value
-// 		}
-// 	}
-// 	return result
-// }
-
-// func evalProgram(program *ast.Program) object.Object {
-// 	var result object.Object
-// 	for _, statement := range program.Statements {
-// 		result = Eval(statement)
-// 		if returnValue, ok := result.(*object.ReturnValue); ok {
-// 			return returnValue.Value
-// 		}
-// 	}
-// 	return result
-// }
 
 func evalBlockStatement(block *ast.BlockStatement) object.Object {
 	var result object.Object
@@ -241,3 +218,5 @@ func isError(obj object.Object) bool {
 	}
 	return false
 }
+
+
