@@ -7,6 +7,8 @@ import (
 	"os/user"
 	"squ1d/evaluator"
 	"squ1d/lexer"
+	"squ1d/object"
+
 	// "squ1d/object"
 	"squ1d/parser"
 )
@@ -14,6 +16,7 @@ import (
 const PROMPT = "┌─SQU1D-(%s)\n└─>>> "
 
 func Start(in io.Reader, out io.Writer) {
+	env := object.NewEnvironment()
 	user, err := user.Current()
 	if err != nil {
 		panic(err)
@@ -33,7 +36,7 @@ func Start(in io.Reader, out io.Writer) {
 			printParserErrors(out, p.Errors())
 			continue
 		}
-		evaluated := evaluator.Eval(program)
+		evaluated := evaluator.Eval(program, env)
 		if evaluated != nil {
 			io.WriteString(out, evaluated.Inspect())
 			io.WriteString(out, "\n")
