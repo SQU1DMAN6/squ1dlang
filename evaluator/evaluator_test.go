@@ -47,6 +47,20 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	return true
 }
 
+func TestStringLiteral(t *testing.T) {
+	input := `"Hello World!"`
+
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("Object is not String. Got %T (%+v)", evaluated, evaluated)
+	}
+
+	if str.Value != "Hello World!" {
+		t.Errorf("String has wrong value. Got %q", str.Value)
+	}
+}
+
 func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 	result, ok := obj.(*object.Boolean)
 	if !ok {
@@ -251,6 +265,10 @@ func TestErrorHandling(t *testing.T) {
 			"foobar",
 			"Identifier not found: foobar",
 		},
+		{
+			`"Hello" - "World"`,
+			"Unknown operator: STRING - STRING",
+		},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -293,6 +311,32 @@ func testEval(input string) object.Object {
 	env := object.NewEnvironment()
 
 	return Eval(program, env)
+}
+
+func TestClosures(t *testing.T) {
+	input := `
+let newAdder = fn(x) {
+	fn(y) { x + y };
+};
+
+let addTwo = newAdder(2);
+addTwo(2);`
+
+	testIntegerObject(t, testEval(input), 4)
+}
+
+func TestStringConcatenation(t *testing.T) {
+	input := `"Hello" + " " + "World!"`
+
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("Object is not String. Got %T (%+v)", evaluated, evaluated)
+	}
+
+	if str.Value != "Hello World!" {
+		t.Errorf("String has wrong value. Got %q", str.Value)
+	}
 }
 
 func TestLetStatements(t *testing.T) {

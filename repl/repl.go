@@ -11,17 +11,17 @@ import (
 	"squ1d/parser"
 )
 
-const PROMPT = "┌─SQU1D-(%s)\n└─>>> "
+const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
 	env := object.NewEnvironment()
-	user, err := user.Current()
+	_, err := user.Current()
 	if err != nil {
 		panic(err)
 	}
 	scanner := bufio.NewScanner(in)
 	for {
-		fmt.Printf(PROMPT, user.Username)
+		fmt.Print(PROMPT)
 		scanned := scanner.Scan()
 		if !scanned {
 			return
