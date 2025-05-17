@@ -20,7 +20,7 @@ const (
 	LBRACE    = "{"
 	RBRACE    = "}"
 	FUNCTION  = "FUNCTION"
-	LET       = "LET"
+	LET       = "VAR"
 	MINUS     = "-"
 	BANG      = "!"
 	ASTERISK  = "*"
@@ -41,12 +41,12 @@ const (
 )
 
 var keywords = map[string]TokenType{
-	"fn":     FUNCTION,
-	"let":    LET,
+	"def":     FUNCTION,
+	"var":    LET,
 	"true":   TRUE,
 	"false":  FALSE,
 	"if":     IF,
-	"else":   ELSE,
+	"el":   ELSE,
 	"return": RETURN,
 }
 

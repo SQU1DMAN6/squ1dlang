@@ -95,7 +95,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 			3,
 		},
 		{
-			"let i = 0; [1][i];",
+			"var i = 0; [1][i];",
 			1,
 		},
 		{
@@ -103,15 +103,15 @@ func TestArrayIndexExpressions(t *testing.T) {
 			3,
 		},
 		{
-			"let myArray = [1, 2, 3]; myArray[2];",
+			"var myArray = [1, 2, 3]; myArray[2];",
 			3,
 		},
 		{
-			"let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+			"var myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
 			6,
 		},
 		{
-			"let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+			"var myArray = [1, 2, 3]; var i = myArray[0]; myArray[i]",
 			2,
 		},
 		{
@@ -135,7 +135,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 }
 
 func TestHashLiterals(t *testing.T) {
-	input := `let two = "two";
+	input := `var two = "two";
 	{
 		"one": 10 - 9,
 		two: 1 + 1,
@@ -186,7 +186,7 @@ func TestHashIndexExpressions(t *testing.T) {
 			`{"foo": 5}["bar"]`, nil,
 		},
 		{
-			`let key = "foo"; {"foo": 5}[key]`, 5,
+			`var key = "foo"; {"foo": 5}[key]`, 5,
 		},
 		{
 			`{}["foo"]`, nil,
@@ -268,8 +268,8 @@ func TestIfElseExpressions(t *testing.T) {
 		{"if (1) { 10 }", 10},
 		{"if (1 < 2) { 10 }", 10},
 		{"if (1 > 2) { 10 }", nil},
-		{"if (1 > 2) { 10 } else { 20 }", 20},
-		{"if (1 < 2) { 10 } else { 20 }", 10},
+		{"if (1 > 2) { 10 } el { 20 }", 20},
+		{"if (1 < 2) { 10 } el { 20 }", 10},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -283,26 +283,26 @@ func TestIfElseExpressions(t *testing.T) {
 }
 
 func TestFunctionObject(t *testing.T) {
-	input := "fn(x) { x + 2 };"
+	input := "def(x) { x + 2 };"
 
 	evaluated := testEval(input)
-	fn, ok := evaluated.(*object.Function)
+	def, ok := evaluated.(*object.Function)
 	if !ok {
 		t.Fatalf("Object is not Function. Got %T (%+v)", evaluated, evaluated)
 	}
 
-	if len(fn.Parameters) != 1 {
-		t.Fatalf("Function has wrong parameters. Parameters: %+v", fn.Parameters)
+	if len(def.Parameters) != 1 {
+		t.Fatalf("Function has wrong parameters. Parameters: %+v", def.Parameters)
 	}
 
-	if fn.Parameters[0].String() != "x" {
-		t.Fatalf("Parameter is not 'x'. Got %q", fn.Parameters[0])
+	if def.Parameters[0].String() != "x" {
+		t.Fatalf("Parameter is not 'x'. Got %q", def.Parameters[0])
 	}
 
 	expectedBody := "(x + 2)"
 
-	if fn.Body.String() != expectedBody {
-		t.Fatalf("Body is not %q. Got %q", expectedBody, fn.Body.String())
+	if def.Body.String() != expectedBody {
+		t.Fatalf("Body is not %q. Got %q", expectedBody, def.Body.String())
 	}
 }
 
@@ -311,12 +311,12 @@ func TestFunctionApplication(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"let identity = fn(x) { x; }; identity(5);", 5},
-		{"let identity = fn(x) { return x; }; identity(5);", 5},
-		{"let double = fn(x) { x * 2; }; double(5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5, 5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
-		{"fn(x) { x; }(5)", 5},
+		{"var identity = def(x) { x; }; identity(5);", 5},
+		{"var identity = def(x) { return x; }; identity(5);", 5},
+		{"var double = def(x) { x * 2; }; double(5);", 10},
+		{"var add = def(x, y) { x + y; }; add(5, 5);", 10},
+		{"var add = def(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"def(x) { x; }(5)", 5},
 	}
 
 	for _, tt := range tests {
@@ -329,11 +329,11 @@ func TestBuiltinFunctions(t *testing.T) {
 		input    string
 		expected interface{}
 	}{
-		{`len("")`, 0},
-		{`len("four")`, 4},
-		{`len("hello world")`, 11},
-		{`len(1)`, "Argument to `len` not supported, got INTEGER"},
-		{`len("one", "two")`, "Wrong number of arguments. Got 2, expected 1"},
+		{`cat("")`, 0},
+		{`cat("four")`, 4},
+		{`cat("hello world")`, 11},
+		{`cat(1)`, "Argument to `cat` not supported, got INTEGER"},
+		{`cat("one", "two")`, "Wrong number of arguments. Got 2, expected 1"},
 	}
 
 	for _, tt := range tests {
@@ -453,7 +453,7 @@ func TestErrorHandling(t *testing.T) {
 			"Unknown operator: STRING - STRING",
 		},
 		{
-			`{"name": "Monkey"}[fn(x) { x }];`,
+			`{"name": "Monkey"}[def(x) { x }];`,
 			"Unusable as hash key: FUNCTION",
 		},
 	}
@@ -502,11 +502,11 @@ func testEval(input string) object.Object {
 
 func TestClosures(t *testing.T) {
 	input := `
-let newAdder = fn(x) {
-	fn(y) { x + y };
+var newAdder = def(x) {
+	def(y) { x + y };
 };
 
-let addTwo = newAdder(2);
+var addTwo = newAdder(2);
 addTwo(2);`
 
 	testIntegerObject(t, testEval(input), 4)
@@ -531,10 +531,10 @@ func TestLetStatements(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"let a = 5; a;", 5},
-		{"let a = 5 * 5; a;", 25},
-		{"let a = 5; let b = a; b;", 5},
-		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+		{"var a = 5; a;", 5},
+		{"var a = 5 * 5; a;", 25},
+		{"var a = 5; var b = a; b;", 5},
+		{"var a = 5; var b = a; var c = a + b + 5; c;", 15},
 	}
 	for _, tt := range tests {
 		testIntegerObject(t, testEval(tt.input), tt.expected)

@@ -9,9 +9,9 @@ import (
 
 func TestLetStatements(t *testing.T) {
 	input := `
-	let x = 5;
-	let y = 10;
-	let foobar = 838383;
+	var x = 5;
+	var y = 10;
+	var foobar = 838383;
 	`
 	l := lexer.New(input)
 	p := New(l)
@@ -29,9 +29,9 @@ func TestLetStatements(t *testing.T) {
 		expectedIdentifier string
 		expectedValue      interface{}
 	}{
-		{"let x = 5;", "x", 5},
-		{"let y = true;", "y", true},
-		{"let foobar = y;", "foobar", "y"},
+		{"var x = 5;", "x", 5},
+		{"var y = true;", "y", true},
+		{"var foobar = y;", "foobar", "y"},
 	}
 
 	for _, tt := range tests {
@@ -57,8 +57,8 @@ func TestLetStatements(t *testing.T) {
 }
 
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
-	if s.TokenLiteral() != "let" {
-		t.Errorf("s.TokenLiteral not 'let'. Got %q", s.TokenLiteral())
+	if s.TokenLiteral() != "var" {
+		t.Errorf("s.TokenLiteral not 'var'. Got %q", s.TokenLiteral())
 		return false
 	}
 	letStmt, ok := s.(*ast.LetStatement)
@@ -314,7 +314,7 @@ func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
 }
 
 func TestFunctionLiteralParsing(t *testing.T) {
-	input := `fn(x, y) {x + y; }`
+	input := `def(x, y) { x + y; }`
 
 	l := lexer.New(input)
 	p := New(l)
@@ -359,9 +359,9 @@ func TestFunctionParameterParsing(t *testing.T) {
 		input          string
 		expectedParams []string
 	}{
-		{input: "fn() {};", expectedParams: []string{}},
-		{input: "fn(x) {};", expectedParams: []string{"x"}},
-		{input: "fn(x, y, z) {};", expectedParams: []string{"x", "y", "z"}},
+		{input: "def() {};", expectedParams: []string{}},
+		{input: "def(x) {};", expectedParams: []string{"x"}},
+		{input: "def(x, y, z) {};", expectedParams: []string{"x", "y", "z"}},
 	}
 	for _, tt := range tests {
 		l := lexer.New(tt.input)
