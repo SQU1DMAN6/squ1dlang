@@ -1,12 +1,13 @@
 package evaluator
 
 import (
+	"fmt"
 	"squ1d/object"
 	// "unicode/utf8"
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": &object.Builtin{
+	"cat": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("Wrong number of arguments. Got %d, expected 1",
@@ -18,7 +19,7 @@ var builtins = map[string]*object.Builtin{
 			case *object.String:
 				return &object.Integer{Value: int64(len(arg.Value))}
 			default:
-				return newError("Argument to `len` not supported, got %s",
+				return newError("Argument to `cat` not supported, got %s",
 					args[0].Type())
 			}
 		},
@@ -58,14 +59,14 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
-	"rest": &object.Builtin{
+	"others": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("Wrong number of arguments. Got %d, expected 1",
 					len(args))
 			}
 			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("Argument to `rest` must be ARRAY, got %s",
+				return newError("Argument to `others` must be ARRAY, got %s",
 					args[0].Type())
 			}
 			arr := args[0].(*object.Array)
@@ -79,14 +80,14 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
-	"push": &object.Builtin{
+	"add": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("Wrong number of arguments. Got %d, expected 2",
 					len(args))
 			}
 			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("Argument to `push` must be ARRAY, got %s",
+				return newError("Argument to `add` must be ARRAY, got %s",
 					args[0].Type())
 			}
 			arr := args[0].(*object.Array)
@@ -96,6 +97,15 @@ var builtins = map[string]*object.Builtin{
 			copy(newElements, arr.Elements)
 			newElements[length] = args[1]
 			return &object.Array{Elements: newElements}
+		},
+	},
+	"write": &object.Builtin{
+		Fn: func(args ...object.Object) object.Object {
+			for _, arg := range args {
+				fmt.Println(arg.Inspect())
+			}
+
+			return nil
 		},
 	},
 }
