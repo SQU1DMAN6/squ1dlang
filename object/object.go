@@ -9,6 +9,17 @@ import (
 )
 
 type ObjectType string
+
+// Inspect implements Object.
+func (o ObjectType) Inspect() string {
+	panic("unimplemented")
+}
+
+// Type implements Object.
+func (o ObjectType) Type() ObjectType {
+	panic("unimplemented")
+}
+
 type BuiltinFunction func(args ...Object) Object
 
 const (
