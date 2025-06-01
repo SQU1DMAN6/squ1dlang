@@ -1,15 +1,74 @@
 package evaluator
 
 import (
+	"bufio"
 	"fmt"
-	"squ1d/object"
-	"unicode/utf8"
 	"math/rand"
+	"os"
+	"squ1d/object"
+	"strconv"
+	"strings"
+	"unicode/utf8"
 )
 
+// rand3(1, 2, 3)
 var builtins = map[string]*object.Builtin{
+	"read": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
+			}
+
+			prompt, ok1 := args[0].(*object.String)
+			varName, ok2 := args[1].(*object.String)
+
+			if !ok1 || !ok2 {
+				return newError("Arguments must be strings. Got %s and %s", args[0].Type(), args[1].Type())
+			}
+
+			fmt.Print(prompt.Value)
+
+			reader := bufio.NewReader(os.Stdin)
+			input, err := reader.ReadString('\n')
+			if err != nil {
+				return newError("Failed to read input: %s", err.Error())
+			}
+
+			input = strings.TrimSpace(input)
+
+			// Try to parse as integer
+			var value object.Object
+			if intVal, err := strconv.ParseInt(input, 10, 64); err == nil {
+				value = &object.Integer{Value: intVal}
+			} else {
+				value = &object.String{Value: input}
+			}
+
+			env.Set(varName.Value, value)
+			return nil
+		},
+	},
+	"tpint": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("Wrong number of arguments. Got %d, expected 1", len(args))
+			}
+
+			strObj, ok := args[0].(*object.String)
+			if !ok {
+				return newError("Argument must be a string. Got %s", args[0].Type())
+			}
+
+			intVal, err := strconv.ParseInt(strObj.Value, 10, 64)
+			if err != nil {
+				return newError("Failed to convert to integer: %s", err.Error())
+			}
+
+			return &object.Integer{Value: intVal}
+		},
+	},
 	"rand": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
 			}
@@ -32,8 +91,31 @@ var builtins = map[string]*object.Builtin{
 			return &object.Integer{Value: int64(randNum)}
 		},
 	},
+	"sepr": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
+			}
+
+			strObj, ok1 := args[0].(*object.String)
+			indexObj, ok2 := args[1].(*object.Integer)
+
+			if !ok1 || !ok2 {
+				return newError("Arguments must be (string, integer). Got %s and %s", args[0].Type(), args[1].Type())
+			}
+
+			parts := strings.Fields(strObj.Value)
+			idx := int(indexObj.Value)
+
+			if idx < 0 || idx >= len(parts) {
+				return newError("Index out of bounds. Got %d, but only %d parts", idx, len(parts))
+			}
+
+			return &object.String{Value: parts[idx]}
+		},
+	},
 	"tp": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("Wrong number of arguments. Got %d, expected 1", len(args))
 			}
@@ -57,7 +139,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"cat": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("Wrong number of arguments. Got %d, expected 1", len(args))
 			}
@@ -73,7 +155,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"first": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("Wrong number of arguments. Got %d, expected 1",
 					len(args))
@@ -90,7 +172,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"last": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("Wrong number of arguments. Got %d, expected 1",
 					len(args))
@@ -108,7 +190,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"others": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("Wrong number of arguments. Got %d, expected 1",
 					len(args))
@@ -128,7 +210,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"add": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("Wrong number of arguments. Got %d, expected 2",
 					len(args))
@@ -146,7 +228,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"write": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			for _, arg := range args {
 				fmt.Print(arg.Inspect())
 			}

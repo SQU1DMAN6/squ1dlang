@@ -1,0 +1,24 @@
+var multiply = def(x, y) {
+    return x * y
+}
+
+var divide = def(x, y) {
+    return x / y
+}
+
+var add = def(x, y) {
+    write(x + y)
+}
+
+var subtract = def(x, y) {
+    return x - y
+}
+
+read("Type operation: ", "operation")
+write(operation)
+var aop = sepr(operation, 1)
+write(aop)
+var first = tpint(sepr(operation, 0))
+write(first, " ", tp(first))
+var second = tpint(sepr(operation, 2))
+write(second, " ", tp(second))
