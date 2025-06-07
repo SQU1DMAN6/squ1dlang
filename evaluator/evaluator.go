@@ -224,9 +224,9 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
 	case operator == "==":
-		return nativeBoolToBooleanObject(left == right)
+		return nativeBoolToBooleanObject(isEqual(left, right))
 	case operator == "!=":
-		return nativeBoolToBooleanObject(left != right)
+		return nativeBoolToBooleanObject(!isEqual(left, right))
 	case left.Type() != right.Type():
 		return newError("Type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
@@ -254,22 +254,45 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	case ">":
 		return nativeBoolToBooleanObject(leftVal > rightVal)
 	case "==":
+		return nativeBoolToBooleanObject(isEqual(left, right))
+	case "!=":
+		return nativeBoolToBooleanObject(!isEqual(left, right))
+	default:
+		return newError("Unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
+
+func isEqual(left, right object.Object) bool {
+	if left.Type() != right.Type() {
+		return false
+	}
+
+	switch l := left.(type) {
+	case *object.Integer:
+		return l.Value == right.(*object.Integer).Value
+	case *object.Boolean:
+		return l.Value == right.(*object.Boolean).Value
+	case *object.String:
+		return l.Value == right.(*object.String).Value
+	default:
+		return left == right
+	}
+}
+
+func evalStringInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+
+	switch operator {
+	case "+":
+		return &object.String{Value: leftVal + rightVal}
+	case "==":
 		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":
 		return nativeBoolToBooleanObject(leftVal != rightVal)
 	default:
 		return newError("Unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
-}
-
-func evalStringInfixExpression(operator string, left, right object.Object) object.Object {
-	if operator != "+" {
-		return newError("Unknown operator: %s %s %s", left.Type(), operator, right.Type())
-	}
-
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.String).Value
-	return &object.String{Value: leftVal + rightVal}
 }
 
 func evalIndexExpression(left, index object.Object) object.Object {

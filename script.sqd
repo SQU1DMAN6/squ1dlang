@@ -1,24 +1,22 @@
-var multiply = def(x, y) {
-    return x * y
+var loop = def() {
+    write("===")
+    read("Guess a value from 1 to 2: ", "input")
+    var random = rand(1, 3)
+    if (input == random) {
+        write("YOU WIN!")
+        write("RANDOM VALUE WAS ", random)
+    } el {
+        write("YOU LOSE.")
+        write("RANDOM VALUE WAS ", random)
+    }
+
+    if (input != "exit") {
+        write("YOU CHOSE: ", input)
+        loop()
+    } el {
+        write("OUT")
+    }
+    write("===")
 }
 
-var divide = def(x, y) {
-    return x / y
-}
-
-var add = def(x, y) {
-    write(x + y)
-}
-
-var subtract = def(x, y) {
-    return x - y
-}
-
-read("Type operation: ", "operation")
-write(operation)
-var aop = sepr(operation, 1)
-write(aop)
-var first = tpint(sepr(operation, 0))
-write(first, " ", tp(first))
-var second = tpint(sepr(operation, 2))
-write(second, " ", tp(second))
+loop()
