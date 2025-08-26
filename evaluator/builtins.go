@@ -3,8 +3,10 @@ package evaluator
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"squ1d/object"
 	"strconv"
 	"strings"
@@ -12,6 +14,194 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
+	"makedir": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("Wrong number of arguments. Got %d, expected 1", len(args))
+			}
+
+			dirname, ok := args[0].(*object.String)
+
+			if !ok {
+				return newError("Argument must be string. Got %s", args[0].Type())
+			}
+
+			err := os.Mkdir(dirname.Value, 0777)
+
+			if err != nil {
+				return newError("Error making directory: %s", err.Error())
+			}
+
+			return nil
+		},
+	},
+	"dirmv": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
+			}
+
+			source, ok1 := args[0].(*object.String)
+			destination, ok2 := args[1].(*object.String)
+
+			if !ok1 || !ok2 {
+				return newError("Arguments must be strings. Got %s and %s", args[0].Type(), args[1].Type())
+			}
+
+			sourceDir, err := os.Stat(source.Value)
+			if err != nil {
+				return newError("Failed to stat source directory %s: %s", source.Value, err.Error())
+			}
+			if !sourceDir.IsDir() {
+				return newError("Source is not a directory: %s", source.Value)
+			}
+
+			err = os.Rename(source.Value, destination.Value)
+			if err != nil {
+				return newError("Failed to move directory from %s to %s: %s", source.Value, destination.Value, err.Error())
+			}
+
+			return nil
+		},
+	},
+	"filemv": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
+			}
+
+			source, ok1 := args[0].(*object.String)
+			destination, ok2 := args[1].(*object.String)
+
+			if !ok1 || !ok2 {
+				return newError("Arguments must be strings. Got %s and %s", args[0].Type(), args[1].Type())
+			}
+
+			sourceFile, err := os.Stat(source.Value)
+			if err != nil {
+				return newError("Failed to stat source file %s: %s", source.Value, err.Error())
+			}
+			if sourceFile.IsDir() {
+				return newError("Source is a directory, not a file: %s", source.Value)
+			}
+
+			err = os.Rename(source.Value, destination.Value)
+			if err != nil {
+				return newError("Failed to move file from %s to %s: %s", source.Value, destination.Value, err.Error())
+			}
+
+			return nil
+		},
+	},
+	"dircp": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
+			}
+
+			src, ok1 := args[0].(*object.String)
+			dst, ok2 := args[1].(*object.String)
+
+			if !ok1 || !ok2 {
+				return newError("Arguments must be strings. Got %s and %s", args[0].Type(), args[1].Type())
+			}
+
+			srcInfo, err := os.Stat(src.Value)
+			if err != nil {
+				return newError("Failed to stat source directory: %s", err.Error())
+			}
+			if !srcInfo.IsDir() {
+				return newError("Source is not a directory: %s", src)
+			}
+
+			// Create the destination directory if it doesn't exist
+			if err := os.MkdirAll(dst.Value, srcInfo.Mode()); err != nil {
+				return newError("Failed to create destination directory: %s", err.Error())
+			}
+
+			entries, err := os.ReadDir(src.Value)
+			if err != nil {
+				return newError("Failed to read source directory: %s", err.Error())
+			}
+
+			for _, entry := range entries {
+				srcPath := filepath.Join(src.Value, entry.Name())
+				dstPath := filepath.Join(dst.Value, entry.Name())
+
+				if entry.IsDir() {
+					if err := CopyDir(srcPath, dstPath); err != nil {
+						return newError("Failed to recursively copy directories: %s", err.Error())
+					}
+				} else {
+					if err := copyFile(srcPath, dstPath); err != nil {
+						return newError("Failed to recursively copy files: %s", err.Error())
+					}
+				}
+			}
+			return nil
+		},
+	},
+	"filecp": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
+			}
+
+			source, ok1 := args[0].(*object.String)
+			stat, ok2 := args[1].(*object.String)
+
+			if !ok1 || !ok2 {
+				return newError("Arguments must be strings. Got %s and %s", args[0].Type(), args[1].Type())
+			}
+
+			src, err := os.Open(source.Value)
+			if err != nil {
+				return newError("Error opening source file: %s", err.Error())
+			}
+			defer src.Close()
+
+			dst, err := os.Create(stat.Value)
+			if err != nil {
+				return newError("Error creating destination file: %s", err.Error())
+			}
+			defer dst.Close()
+
+			_, err = io.Copy(dst, src)
+			if err != nil {
+				return newError("Error copying file: %s", err.Error())
+			}
+
+			return nil
+		},
+	},
+	"ls": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("Wrong number of arguments. Got %d, expected 1", len(args))
+			}
+
+			input, ok := args[0].(*object.String)
+
+			if !ok {
+				return newError("Argument must be string. Got %s", args[0].Type())
+			}
+
+			dirPath := input.Value
+			entries, err := os.ReadDir(dirPath)
+
+			if err != nil {
+				return newError("Error reading directory: %s", err.Error())
+			}
+
+			var result []object.Object
+
+			for _, entry := range entries {
+				result = append(result, &object.String{Value: entry.Name()})
+			}
+
+			return &object.Array{Elements: result}
+		},
+	},
 	"writefile": &object.Builtin{
 		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 2 {
@@ -271,4 +461,53 @@ var builtins = map[string]*object.Builtin{
 			return nil
 		},
 	},
+}
+
+func CopyDir(srcDir, dstDir string) error {
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		return fmt.Errorf("failed to read directory %s: %w", srcDir, err)
+	}
+
+	// Ensure the destination directory exists
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return fmt.Errorf("failed to create destination directory %s: %w", dstDir, err)
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(srcDir, entry.Name())
+		dstPath := filepath.Join(dstDir, entry.Name())
+
+		if entry.IsDir() {
+			if err := CopyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			if err := copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to open source file %s: %w", src, err)
+	}
+	defer sourceFile.Close()
+
+	destinationFile, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file %s: %w", dst, err)
+	}
+	defer destinationFile.Close()
+
+	_, err = io.Copy(destinationFile, sourceFile)
+	if err != nil {
+		return fmt.Errorf("failed to copy contents from %s to %s: %w", src, dst, err)
+	}
+
+	return nil
 }
