@@ -129,7 +129,7 @@ var builtins = map[string]*object.Builtin{
 				dstPath := filepath.Join(dst.Value, entry.Name())
 
 				if entry.IsDir() {
-					if err := CopyDir(srcPath, dstPath); err != nil {
+					if err := copyDir(srcPath, dstPath); err != nil {
 						return newError("Failed to recursively copy directories: %s", err.Error())
 					}
 				} else {
@@ -428,7 +428,7 @@ var builtins = map[string]*object.Builtin{
 			arr := args[0].(*object.Array)
 			length := len(arr.Elements)
 			if length > 0 {
-				return arr.Elements[length-1]
+				return arr.Elements[length-1] //convert from [] to {}
 			}
 			return NULL
 		},
@@ -451,6 +451,30 @@ var builtins = map[string]*object.Builtin{
 			return &object.Array{Elements: newElements}
 		},
 	},
+	"arraycontains": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("Wrong number of arguments. Got %d, expected 2",
+					len(args))
+			}
+			if args[0].Type() != object.ARRAY_OBJ {
+				return newError("Argument to `contains` must be ARRAY, got %s",
+					args[0].Type())
+			}
+			arr := args[0].(*object.Array)
+			element := args[1]
+			length := len(arr.Elements)
+
+			for i := 0; i < length; i++ {
+				fmt.Printf("arraylement %v, element %v", arr.Elements[i], element)
+				if arr.Elements[i] == element {
+					return &object.Boolean{Value: true}
+				}
+			}
+			return &object.Boolean{Value: false}
+
+		},
+	},
 	"write": &object.Builtin{
 		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			for _, arg := range args {
@@ -463,7 +487,7 @@ var builtins = map[string]*object.Builtin{
 	},
 }
 
-func CopyDir(srcDir, dstDir string) error {
+func copyDir(srcDir, dstDir string) error {
 	entries, err := os.ReadDir(srcDir)
 	if err != nil {
 		return fmt.Errorf("failed to read directory %s: %w", srcDir, err)
@@ -479,7 +503,7 @@ func CopyDir(srcDir, dstDir string) error {
 		dstPath := filepath.Join(dstDir, entry.Name())
 
 		if entry.IsDir() {
-			if err := CopyDir(srcPath, dstPath); err != nil {
+			if err := copyDir(srcPath, dstPath); err != nil {
 				return err
 			}
 		} else {
