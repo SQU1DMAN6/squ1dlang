@@ -15,14 +15,13 @@ import (
 var builtins = map[string]*object.Builtin{
 	"read": &object.Builtin{
 		Fn: func(env *object.Environment, args ...object.Object) object.Object {
-			if len(args) != 2 {
-				return newError("Wrong number of arguments. Got %d, expected 2", len(args))
+			if len(args) != 1 {
+				return newError("Wrong number of arguments. Got %d, expected 1", len(args))
 			}
 
-			prompt, ok1 := args[0].(*object.String)
-			varName, ok2 := args[1].(*object.String)
+			prompt, ok := args[0].(*object.String)
 
-			if !ok1 || !ok2 {
+			if !ok {
 				return newError("Arguments must be strings. Got %s and %s", args[0].Type(), args[1].Type())
 			}
 
@@ -44,8 +43,7 @@ var builtins = map[string]*object.Builtin{
 				value = &object.String{Value: input}
 			}
 
-			env.Set(varName.Value, value)
-			return nil
+			return value
 		},
 	},
 	"tpint": &object.Builtin{
